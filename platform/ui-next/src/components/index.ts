@@ -289,3 +289,11 @@ export {
   SmartScrollbarEndpoints,
   useByteArray,
 };
+
+// Clinical components
+export { CalibrationWarningBanner } from './CalibrationWarningBanner';
+export {
+  PatientVerificationDialog,
+  shouldVerifyPatient,
+  markPatientVerified,
+} from './PatientVerificationDialog';

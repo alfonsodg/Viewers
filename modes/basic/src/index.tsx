@@ -22,6 +22,7 @@ export const ohif = {
   sopClassHandler: '@ohif/extension-default.sopClassHandlerModule.stack',
   thumbnailList: '@ohif/extension-default.panelModule.seriesList',
   hangingProtocol: '@ohif/extension-default.hangingProtocolModule.default',
+  dicomAttributes: '@ohif/extension-default.panelModule.dicomAttributes',
   wsiSopClassHandler:
     '@ohif/extension-cornerstone.sopClassHandlerModule.DicomMicroscopySopClassHandler',
 };
@@ -286,7 +287,7 @@ export const basicLayout = {
   props: {
     leftPanels: [ohif.thumbnailList],
     leftPanelResizable: true,
-    rightPanels: [cornerstone.segmentation, cornerstone.measurements],
+    rightPanels: [cornerstone.segmentation, cornerstone.measurements, ohif.dicomAttributes],
     rightPanelClosed: true,
     rightPanelResizable: true,
     viewports: [

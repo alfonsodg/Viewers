@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import * as cs3DTools from '@cornerstonejs/tools';
 import { Enums, eventTarget, getEnabledElement } from '@cornerstonejs/core';
-import { MeasurementService, useViewportRef } from '@ohif/core';
-import { useViewportDialog } from '@ohif/ui-next';
+import { MeasurementService, useViewportRef, utils } from '@ohif/core';
+import { useViewportDialog, CalibrationWarningBanner } from '@ohif/ui-next';
 import type { Types as csTypes } from '@cornerstonejs/core';
 
 import { setEnabledElement } from '../state';
@@ -306,6 +306,19 @@ const OHIFCornerstoneViewport = React.memo(
 
     const Notification = customizationService.getCustomization('ui.notificationComponent');
 
+    // Calibration status for measurement safety warnings
+    const calibrationInfo = useMemo(() => {
+      if (!displaySets?.length) {
+        return null;
+      }
+      const primaryDisplaySet = displaySets[0];
+      const instance = primaryDisplaySet?.images?.[0] || primaryDisplaySet?.instance || primaryDisplaySet;
+      if (!instance) {
+        return null;
+      }
+      return utils.getCalibrationInfo(instance);
+    }, [displaySets]);
+
     return (
       <React.Fragment>
         <div className="viewport-wrapper">
@@ -334,6 +347,12 @@ const OHIFCornerstoneViewport = React.memo(
             viewportId={viewportId}
             servicesManager={servicesManager}
           />
+          {calibrationInfo && calibrationInfo.severity !== 'ok' && (
+            <CalibrationWarningBanner
+              severity={calibrationInfo.severity}
+              message={calibrationInfo.message}
+            />
+          )}
           <ActiveViewportBehavior
             viewportId={viewportId}
             servicesManager={servicesManager}
