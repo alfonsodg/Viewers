@@ -19,7 +19,16 @@
   "rules": {
     // Enforce consistent brace style for all control statements for readability
     "curly": "error",
-    "import/no-anonymous-default-export": "off"
+    "import/no-anonymous-default-export": "off",
+    // Security: prevent eval and implied eval
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    // Warn on explicit any to track and reduce usage over time
+    "@typescript-eslint/no-explicit-any": "warn",
+    // Warn on raw console.log to encourage structured logging
+    "no-console": ["warn", { "allow": ["warn", "error", "debug"] }],
+    // Prevent subtle re-render bugs from array index keys
+    "react/no-array-index-as-key": "warn"
   },
   "globals": {
     "cy": true,
