@@ -2,8 +2,13 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation } from 'react-router';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { utils } from '@ohif/core';
+import { utils, DicomMetadataStore } from '@ohif/core';
 import { ImageViewerProvider, DragAndDropProvider } from '@ohif/ui-next';
+import {
+  PatientVerificationDialog,
+  shouldVerifyPatient,
+  markPatientVerified,
+} from '@ohif/ui-next';
 import { useSearchParams } from '../../hooks';
 import { useAppConfig } from '@state';
 import ViewportGrid from '@components/ViewportGrid';
@@ -49,6 +54,8 @@ export default function ModeRoute({
 
   const [refresh, setRefresh] = useState(false);
   const [ExtensionDependenciesLoaded, setExtensionDependenciesLoaded] = useState(false);
+  const [patientVerified, setPatientVerified] = useState(false);
+  const [patientInfo, setPatientInfo] = useState(null);
 
   const layoutTemplateData = useRef(false);
   const locationRef = useRef(null);
@@ -65,6 +72,8 @@ export default function ModeRoute({
     hangingProtocolService,
     userAuthenticationService,
     customizationService,
+    auditTrailService,
+    measurementService,
   } = servicesManager.services;
 
   const { extensions, sopClassHandlers, hangingProtocol } = mode;
@@ -164,6 +173,73 @@ export default function ModeRoute({
 
     validateStudies();
   }, [studyInstanceUIDs, ExtensionDependenciesLoaded, dataSource, navigate]);
+
+  // Patient verification — require confirmation before viewing
+  useEffect(() => {
+    if (!studyInstanceUIDs?.length || !ExtensionDependenciesLoaded) {
+      return;
+    }
+
+    const verificationMode = appConfig?.patientVerification?.mode || 'never';
+    const needsVerification = appConfig?.patientVerification?.enabled &&
+      shouldVerifyPatient(verificationMode, studyInstanceUIDs[0]);
+
+    if (!needsVerification) {
+      setPatientVerified(true);
+      return;
+    }
+
+    // Get patient info from DicomMetadataStore
+    const study = DicomMetadataStore.getStudy(studyInstanceUIDs[0]);
+    if (study) {
+      setPatientInfo({
+        patientName: study.PatientName?.Alphabetic || study.PatientName || '',
+        patientId: study.PatientID || '',
+        patientBirthDate: study.PatientBirthDate || '',
+        patientSex: study.PatientSex || '',
+        studyDescription: study.StudyDescription || '',
+        studyDate: study.StudyDate || '',
+      });
+    } else {
+      // If metadata not yet loaded, skip verification for now
+      setPatientVerified(true);
+    }
+  }, [studyInstanceUIDs, ExtensionDependenciesLoaded, appConfig]);
+
+  // Audit trail — log study open and wire measurement logging
+  useEffect(() => {
+    if (!patientVerified || !studyInstanceUIDs?.length || !auditTrailService) {
+      return;
+    }
+
+    // Log study open
+    studyInstanceUIDs.forEach(uid => {
+      auditTrailService.logStudyAccess(uid, 'open');
+    });
+
+    // Wire measurement CRUD logging
+    const measurementSubs = [];
+    if (measurementService) {
+      const events = measurementService.EVENTS;
+      const logMeasurement = (action) => (event) => {
+        auditTrailService.logMeasurement(action, event.measurement || event);
+      };
+
+      measurementSubs.push(
+        measurementService.subscribe(events.MEASUREMENT_ADDED, logMeasurement('create')),
+        measurementService.subscribe(events.MEASUREMENT_UPDATED, logMeasurement('update')),
+        measurementService.subscribe(events.MEASUREMENT_REMOVED, logMeasurement('delete'))
+      );
+    }
+
+    return () => {
+      // Log study close
+      studyInstanceUIDs.forEach(uid => {
+        auditTrailService.logStudyAccess(uid, 'close');
+      });
+      measurementSubs.forEach(sub => sub.unsubscribe());
+    };
+  }, [patientVerified, studyInstanceUIDs, auditTrailService, measurementService]);
 
   useEffect(() => {
     if (!ExtensionDependenciesLoaded || !studyInstanceUIDs?.length) {
@@ -363,6 +439,35 @@ export default function ModeRoute({
 
   if (!studyInstanceUIDs || !layoutTemplateData.current || !ExtensionDependenciesLoaded) {
     return null;
+  }
+
+  // Show patient verification dialog if needed
+  if (!patientVerified && patientInfo) {
+    return (
+      <PatientVerificationDialog
+        patientName={patientInfo.patientName}
+        patientId={patientInfo.patientId}
+        patientBirthDate={patientInfo.patientBirthDate}
+        patientSex={patientInfo.patientSex}
+        studyDescription={patientInfo.studyDescription}
+        studyDate={patientInfo.studyDate}
+        onConfirm={() => {
+          markPatientVerified(studyInstanceUIDs[0]);
+          setPatientVerified(true);
+          auditTrailService?.log('PATIENT_VERIFIED', {
+            studyInstanceUID: studyInstanceUIDs[0],
+            patientId: patientInfo.patientId,
+          });
+        }}
+        onReject={() => {
+          auditTrailService?.log('PATIENT_REJECTED', {
+            studyInstanceUID: studyInstanceUIDs[0],
+            patientId: patientInfo.patientId,
+          });
+          navigate('/');
+        }}
+      />
+    );
   }
 
   const ViewportGridWithDataSource = props => {
