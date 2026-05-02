@@ -1,104 +1,102 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 import Card from './PortalTooltipCard';
 
-const portalNodes = {};
+interface PortalTooltipProps {
+  parent: string | HTMLElement;
+  active?: boolean;
+  group?: string;
+  tooltipTimeout?: number;
+  children?: React.ReactNode;
+  [key: string]: unknown;
+}
 
 /**
  * A portal based tooltip component.
  *
  * This component has been repurposed and modified
  * for OHIF usage: https://github.com/romainberger/react-portal-tooltip
+ *
+ * Rewritten from class component to functional component to remove
+ * deprecated lifecycle methods (componentWillReceiveProps) and
+ * legacy ReactDOM.render API.
  */
-export default class PortalTooltip extends React.Component {
-  static propTypes = {
-    parent: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
-    active: PropTypes.bool,
-    group: PropTypes.string,
-    tooltipTimeout: PropTypes.number,
-  };
+export default function PortalTooltip({
+  parent,
+  active = false,
+  group = 'main',
+  tooltipTimeout = 0,
+  children,
+  ...other
+}: PortalTooltipProps) {
+  const portalNodeRef = useRef<HTMLDivElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevActiveRef = useRef(active);
+  const [shouldRender, setShouldRender] = React.useState(active);
 
-  static defaultProps = {
-    active: false,
-    group: 'main',
-    tooltipTimeout: 0,
-  };
+  // Create portal node on mount
+  useEffect(() => {
+    const node = document.createElement('div');
+    node.className = 'ToolTipPortal';
+    document.body.appendChild(node);
+    portalNodeRef.current = node;
 
-  createPortal() {
-    portalNodes[this.props.group] = {
-      node: document.createElement('div'),
-      timeout: false,
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (portalNodeRef.current) {
+        try {
+          document.body.removeChild(portalNodeRef.current);
+        } catch (e) {
+          console.warn('Failed to remove portal node:', e);
+        }
+      }
     };
-    portalNodes[this.props.group].node.className = 'ToolTipPortal';
-    document.body.appendChild(portalNodes[this.props.group].node);
-  }
+  }, []);
 
-  renderPortal(props) {
-    if (!portalNodes[this.props.group]) {
-      this.createPortal();
-    }
-    const { parent, ...other } = props;
-    const parentEl = typeof parent === 'string' ? document.querySelector(parent) : parent;
-    ReactDOM.render(
-      <Card
-        parentEl={parentEl}
-        {...other}
-      />,
-      portalNodes[this.props.group].node
-    );
-  }
-
-  componentDidMount() {
-    if (!this.props.active) {
-      return;
+  // Handle active state transitions with timeout
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
 
-    this.renderPortal(this.props);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (
-      (!portalNodes[this.props.group] && !nextProps.active) ||
-      (!this.props.active && !nextProps.active)
-    ) {
-      return;
+    if (active) {
+      setShouldRender(true);
+    } else if (prevActiveRef.current && !active) {
+      // Was active, now deactivating — apply timeout
+      if (tooltipTimeout > 0) {
+        timeoutRef.current = setTimeout(() => {
+          setShouldRender(false);
+        }, tooltipTimeout);
+      } else {
+        setShouldRender(false);
+      }
     }
 
-    const props = { ...nextProps };
-    const newProps = { ...nextProps };
+    prevActiveRef.current = active;
+  }, [active, tooltipTimeout]);
 
-    if (portalNodes[this.props.group] && portalNodes[this.props.group].timeout) {
-      clearTimeout(portalNodes[this.props.group].timeout);
-    }
+  const getParentEl = useCallback(() => {
+    return typeof parent === 'string' ? document.querySelector(parent) : parent;
+  }, [parent]);
 
-    if (this.props.active && !props.active) {
-      newProps.active = true;
-      portalNodes[this.props.group].timeout = setTimeout(() => {
-        props.active = false;
-        this.renderPortal(props);
-      }, this.props.tooltipTimeout);
-    }
-
-    this.renderPortal(newProps);
-  }
-
-  componentWillUnmount() {
-    if (portalNodes[this.props.group]) {
-      // Todo: move this to root.unmount
-      ReactDOM.unmountComponentAtNode(portalNodes[this.props.group].node);
-      clearTimeout(portalNodes[this.props.group].timeout);
-
-      try {
-        document.body.removeChild(portalNodes[this.props.group].node);
-      } catch (e) {}
-
-      portalNodes[this.props.group] = null;
-    }
-  }
-
-  render() {
+  if (!portalNodeRef.current) {
     return null;
   }
+
+  const parentEl = getParentEl();
+
+  return createPortal(
+    <Card
+      parentEl={parentEl}
+      active={shouldRender}
+      {...other}
+    >
+      {children}
+    </Card>,
+    portalNodeRef.current
+  );
 }
