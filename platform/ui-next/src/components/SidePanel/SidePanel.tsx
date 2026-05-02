@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Icons } from '../Icons';
 import { TooltipTrigger, TooltipContent, Tooltip } from '../Tooltip';
 import { Separator } from '../Separator';
+import { ErrorBoundary } from '../Errorboundary';
 
 /**
  * SidePanel component properties.
@@ -464,7 +465,14 @@ const SidePanel = ({
           {getOpenStateComponent()}
           {tabs.map((tab, tabIndex) => {
             if (tabIndex === activeTabIndex) {
-              return <tab.content key={tabIndex} />;
+              return (
+                <ErrorBoundary
+                  key={tabIndex}
+                  context={tab.label || `Panel ${tabIndex}`}
+                >
+                  <tab.content />
+                </ErrorBoundary>
+              );
             }
             return null;
           })}

@@ -115,13 +115,14 @@ const ProgressDropdown = ({
               'bg-primary/60 hover:bg-primary/80': canMoveNext,
               'bg-popover pointer-events-none': !canMoveNext,
             })}
+            onClick={handleNextButtonClick}
+            aria-label="Next step"
           >
             <Icons.ArrowRight
               className={classnames('text-foreground relative left-0.5 h-6 w-6', {
                 'text-foreground': canMoveNext,
                 'text-': !canMoveNext,
               })}
-              onClick={handleNextButtonClick}
             />
           </button>
         </div>
