@@ -78,6 +78,7 @@ export function StudyBrowserSort({ servicesManager }: withAppTypes) {
           <button
             onClick={toggleSortDirection}
             className="flex h-[26px] items-center justify-center bg-background"
+            aria-label="Toggle sort direction"
           >
             {sortDirection === 'ascending' ? (
               <Icons.SortingAscending className="text-primary w-2" />

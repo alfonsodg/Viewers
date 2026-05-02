@@ -77,18 +77,36 @@ function ViewportActionBar({
         {seriesDescription}
       </span>
       {/* Prev/Next icons */}
-      <Icons.ByName
-        className="hover:text-highlight ml-auto mr-2 cursor-pointer text-white"
-        name="chevron-prev"
+      <button
+        type="button"
+        className="appearance-none border-none bg-transparent p-0 cursor-pointer"
         onClick={() => onArrowsClick('left')}
-      />
-      <Icons.ByName
-        className="hover:text-highlight mr-2 cursor-pointer text-white"
-        name="chevron-next"
+        aria-label="Previous series"
+      >
+        <Icons.ByName
+          className="hover:text-highlight ml-auto mr-2 text-white"
+          name="chevron-prev"
+        />
+      </button>
+      <button
+        type="button"
+        className="appearance-none border-none bg-transparent p-0 cursor-pointer"
         onClick={() => onArrowsClick('right')}
-      />
+        aria-label="Next series"
+      >
+        <Icons.ByName
+          className="hover:text-highlight mr-2 text-white"
+          name="chevron-next"
+        />
+      </button>
       {/* Patient Info */}
-      <div onClick={() => setShowPatientInfo(!showPatientInfo)}>
+      <button
+        type="button"
+        className="appearance-none border-none bg-transparent p-0 cursor-pointer"
+        onClick={() => setShowPatientInfo(!showPatientInfo)}
+        aria-expanded={showPatientInfo}
+        aria-label="Toggle patient information"
+      >
         <PatientInfo
           showPatientInfoRef={showPatientInfoElemRef}
           isOpen={showPatientInfo}
@@ -101,7 +119,7 @@ function ViewportActionBar({
           spacing={spacing}
           scanner={scanner}
         />
-      </div>
+      </button>
     </div>
   );
 }
