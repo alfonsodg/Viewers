@@ -92,7 +92,17 @@ const toUpdateSpec = (obj: object) =>
     ? obj
     : { $merge: (obj ?? {}) as object };
 
-const unsubscriptions = [];
+const unsubscriptions: (() => void)[] = [];
+
+/**
+ * Clear any leftover subscriptions before adding new ones to prevent
+ * memory leaks when onModeEnter is called without a prior onModeExit.
+ */
+function clearSubscriptions(): void {
+  unsubscriptions.forEach(unsub => unsub());
+  unsubscriptions.length = 0;
+}
+
 /**
  *
  */
@@ -107,6 +117,9 @@ const cornerstoneExtension: Types.Extensions.Extension = {
     commandsManager,
     extensionManager,
   }: withAppTypes): void => {
+    // Prevent memory leaks if onModeEnter is called twice without onModeExit
+    clearSubscriptions();
+
     const { cornerstoneViewportService, toolbarService, segmentationService } =
       servicesManager.services;
 
