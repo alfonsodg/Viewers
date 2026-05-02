@@ -12,6 +12,7 @@ import makeCancelable from './makeCancelable';
 import hotkeys from './hotkeys';
 import Queue from './Queue';
 import isDicomUid from './isDicomUid';
+import { isDicomFile, isDicomBuffer } from './isDicomFile';
 import formatDate from './formatDate';
 import formatTime from './formatTime';
 import formatPN from './formatPN';
@@ -82,6 +83,8 @@ const utils = {
   hotkeys,
   Queue,
   isDicomUid,
+  isDicomFile,
+  isDicomBuffer,
   isEqualWithin,
   sopClassDictionary,
   addAccessors,
@@ -125,6 +128,8 @@ export {
   hotkeys,
   Queue,
   isDicomUid,
+  isDicomFile,
+  isDicomBuffer,
   isEqualWithin,
   resolveObjectPath,
   hierarchicalListUtils,

@@ -1,8 +1,18 @@
 import FileLoaderService from './fileLoaderService';
-import { DicomMetadataStore } from '@ohif/core';
+import { DicomMetadataStore, utils } from '@ohif/core';
+
+const { isDicomFile } = utils;
 
 const processFile = async file => {
   try {
+    // Skip non-DICOM files (PDF handled separately by fileLoaderService)
+    if (file.type !== 'application/pdf') {
+      const isDicom = await isDicomFile(file);
+      if (!isDicom) {
+        return;
+      }
+    }
+
     const fileLoaderService = new FileLoaderService(file);
     const imageId = fileLoaderService.addFile(file);
     const image = await fileLoaderService.loadFile(file, imageId);
@@ -10,7 +20,7 @@ const processFile = async file => {
 
     DicomMetadataStore.addInstance(dicomJSONDataset);
   } catch (error) {
-    console.log(error.name, ':Error when trying to load and process local files:', error.message);
+    console.debug(error.name, ':Error when trying to load and process local files:', error.message);
   }
 };
 
