@@ -2,17 +2,40 @@ server {
   gzip_static  always;
   gzip_proxied expired no-cache no-store private auth;
   gunzip       on;
+  server_tokens off;
   listen ${PORT} default_server;
   listen [::]:${PORT} default_server;
+
+  # Cache hashed static assets aggressively
+  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    root /usr/share/nginx/html;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    add_header Cross-Origin-Resource-Policy same-origin;
+    add_header X-Content-Type-Options "nosniff" always;
+  }
+
+  # Don't cache index.html or app-config
+  location ~* (index\.html|app-config\.js)$ {
+    root /usr/share/nginx/html;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header Cross-Origin-Resource-Policy same-origin;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    try_files $uri $uri/ ${PUBLIC_URL}index.html;
+  }
+
   location / {
     root   /usr/share/nginx/html;
     index  index.html index.htm;
     try_files $uri $uri/ ${PUBLIC_URL}index.html;
     add_header Cross-Origin-Resource-Policy same-origin;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
   }
   error_page   500 502 503 504  /50x.html;
   location = /50x.html {
