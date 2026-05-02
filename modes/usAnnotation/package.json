@@ -33,7 +33,7 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "dependencies": {
-    "@babel/runtime": "7.28.2",
+    "@babel/runtime": "7.29.2",
     "@cornerstonejs/core": "4.22.3",
     "@cornerstonejs/tools": "4.22.3",
     "@ohif/core": "3.13.0-beta.67",
