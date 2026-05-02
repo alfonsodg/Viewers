@@ -12,7 +12,18 @@ export default async config => {
       const regex = useDynamicConfig.regex;
 
       if (configUrl.match(regex)) {
-        const response = await fetch(configUrl);
+        const response = await fetch(configUrl, {
+          method: 'GET',
+          mode: 'cors',
+          credentials: 'same-origin',
+          redirect: 'error',
+          referrerPolicy: 'no-referrer',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Dynamic config fetch failed: ${response.status}`);
+        }
+
         return response.json();
       } else {
         return null;
