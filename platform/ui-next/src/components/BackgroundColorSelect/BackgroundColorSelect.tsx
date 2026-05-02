@@ -2,9 +2,11 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../Select';
 
 const BackgroundColorSelect: React.FC = () => {
+  const { t } = useTranslation('Common');
   const [selectedColor, setSelectedColor] = useState('#050615');
 
   useEffect(() => {
@@ -22,7 +24,7 @@ const BackgroundColorSelect: React.FC = () => {
     <div>
       <Select onValueChange={handleColorChange}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select Color" />
+          <SelectValue placeholder={t('Select Color')} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="black">Viewport (Black)</SelectItem>

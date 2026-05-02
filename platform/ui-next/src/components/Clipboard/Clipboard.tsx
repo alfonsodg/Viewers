@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../Button';
 import { Icons } from '../Icons';
 
@@ -7,6 +8,7 @@ interface ClipboardProps {
 }
 
 const Clipboard: React.FC<ClipboardProps> = ({ children }) => {
+  const { t } = useTranslation('Common');
   const [copyState, setCopyState] = React.useState<'idle' | 'success' | 'error'>('idle');
   const copyText = React.useMemo(() => {
     if (typeof children === 'string') {
@@ -38,7 +40,7 @@ const Clipboard: React.FC<ClipboardProps> = ({ children }) => {
         handleCopy();
       }}
       className="text-foreground"
-      title="Copy"
+      title={t('Copy')}
     >
       {copyState === 'idle' && <Icons.Copy className="h-6 w-6" />}
       {copyState === 'success' && <Icons.FeedbackComplete className="h-6 w-6 text-foreground" />}

@@ -11,5 +11,18 @@
   "Series": "Secuencia",
   "Show": "Mostrar",
   "Stop": "Detener",
-  "StudyDate": "Fecha de estudo"
+  "StudyDate": "Fecha de estudio",
+  "Back": "Volver",
+  "Back to": "Volver a {{location}}",
+  "Cancel": "Cancelar",
+  "Close": "Cerrar",
+  "Copy": "Copiar",
+  "LOAD": "CARGAR",
+  "No": "No",
+  "NoStudyDate": "Sin fecha de estudio",
+  "Save": "Guardar",
+  "Select Color": "Seleccionar color",
+  "Sort direction": "Dirección de orden",
+  "Yes": "Sí",
+  "mm": "mm"
 }
