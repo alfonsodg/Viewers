@@ -1,5 +1,6 @@
 import React from 'react';
 import { WrappedPanelStudyBrowser } from './Panels';
+import PanelDicomAttributes from './Panels/PanelDicomAttributes';
 import i18n from 'i18next';
 
 // TODO:
@@ -19,6 +20,18 @@ function getPanelModule({ commandsManager, extensionManager, servicesManager }) 
           {...props}
           commandsManager={commandsManager}
           extensionManager={extensionManager}
+          servicesManager={servicesManager}
+        />
+      ),
+    },
+    {
+      name: 'dicomAttributes',
+      iconName: 'tab-patient-info',
+      iconLabel: 'DICOM Attributes',
+      label: i18n.t('SidePanel:DICOM Attributes'),
+      component: props => (
+        <PanelDicomAttributes
+          {...props}
           servicesManager={servicesManager}
         />
       ),
