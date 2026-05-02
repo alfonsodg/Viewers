@@ -817,7 +817,7 @@ export const Icons = {
 
     if (!IconComponent) {
       console.debug(`Icon "${name}" not found.`);
-      return <div>Missing Icon</div>;
+      return <span data-missing-icon={name}>⚠</span>;
     }
 
     return (

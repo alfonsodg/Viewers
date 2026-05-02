@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icons } from '../Icons';
 import {
   DropdownMenu,
@@ -9,6 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
 
 export function StudyBrowserSort({ servicesManager }: withAppTypes) {
+  const { t } = useTranslation('Common');
   // Todo: this should not be here, no servicesManager should be in ui-next, only
   // customization service
   const { customizationService, displaySetService } = servicesManager.services;
@@ -86,7 +88,7 @@ export function StudyBrowserSort({ servicesManager }: withAppTypes) {
             )}
           </button>
         </TooltipTrigger>
-        <TooltipContent>Sort direction</TooltipContent>
+        <TooltipContent>{t('Sort direction')}</TooltipContent>
       </Tooltip>
     </div>
   );

@@ -25,5 +25,8 @@
   "Back": "Back",
   "Foreground": "Foreground",
   "SELECT A FOREGROUND": "SELECT A FOREGROUND",
-  "SELECT A SEGMENTATION": "SELECT A SEGMENTATION"
+  "SELECT A SEGMENTATION": "SELECT A SEGMENTATION",
+  "Copy": "Copy",
+  "Select Color": "Select Color",
+  "Sort direction": "Sort direction"
 }
