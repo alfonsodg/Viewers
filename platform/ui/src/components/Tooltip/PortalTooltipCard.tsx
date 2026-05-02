@@ -1,385 +1,281 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const FG_SIZE = 8;
 const BG_SIZE = 9;
+const MARGIN = 15;
+
+const DEFAULT_ARROW_STYLE = {
+  color: '#090c29',
+  borderColor: 'rgba(58, 63, 153, 1)',
+};
+
+interface PortalTooltipCardProps {
+  active?: boolean;
+  position?: 'top' | 'right' | 'bottom' | 'left';
+  arrow?: null | 'center' | 'top' | 'right' | 'bottom' | 'left';
+  align?: null | 'center' | 'right' | 'left';
+  style?: { style?: React.CSSProperties; arrowStyle?: Record<string, unknown> };
+  useHover?: boolean;
+  parentEl?: HTMLElement | null;
+  children?: React.ReactNode;
+}
 
 /**
  * A portal based tooltip card component.
  *
- * This component has been repurposed and modified
- * for OHIF usage: https://github.com/romainberger/react-portal-tooltip
+ * Rewritten from class component to functional component.
+ * Original: https://github.com/romainberger/react-portal-tooltip
  */
-export default class PortalTooltipCard extends Component {
-  static propTypes = {
-    active: PropTypes.bool,
-    position: PropTypes.oneOf(['top', 'right', 'bottom', 'left']),
-    arrow: PropTypes.oneOf([null, 'center', 'top', 'right', 'bottom', 'left']),
-    align: PropTypes.oneOf([null, 'center', 'right', 'left']),
-    style: PropTypes.object,
-    useHover: PropTypes.bool,
+export default function PortalTooltipCard({
+  active = false,
+  position = 'right',
+  arrow = null,
+  align = null,
+  style: styleProp = { style: {}, arrowStyle: {} },
+  useHover = true,
+  parentEl,
+  children,
+}: PortalTooltipCardProps) {
+  const [hover, setHover] = useState(false);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const rootRef = useRef<HTMLDivElement>(null);
+  const offscreenDifferenceRef = useRef(0);
+
+  const updateSize = useCallback(() => {
+    if (!rootRef.current) {
+      return;
+    }
+    const newWidth = rootRef.current.offsetWidth;
+    const newHeight = rootRef.current.offsetHeight;
+    setSize(prev => {
+      if (prev.width !== newWidth || prev.height !== newHeight) {
+        return { width: newWidth, height: newHeight };
+      }
+      return prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    updateSize();
+  }, [active, parentEl, children, updateSize]);
+
+  const mergeStyle = (base: Record<string, unknown>, theme?: Record<string, unknown>) => {
+    if (!theme) {
+      return base;
+    }
+    const { position: _p, top: _t, left: _l, right: _r, bottom: _b, marginLeft: _ml, marginRight: _mr, ...validTheme } = theme;
+    return { ...base, ...validTheme };
   };
 
-  static defaultProps = {
-    active: false,
-    position: 'right',
-    arrow: null,
-    align: null,
-    style: { style: {}, arrowStyle: {} },
-    useHover: true,
-  };
-
-  state = {
-    hover: false,
-    width: 0,
-    height: 0,
-  };
-
-  offscreenDifference = 0;
-
-  margin = 15;
-
-  defaultArrowStyle = {
-    color: '#090c29', // primary-dark
-    borderColor: 'rgba(58, 63, 153, 1)', // secondary-light
-  };
-
-  rootRef = React.createRef();
-
-  getGlobalStyle() {
-    if (!this.props.parentEl) {
-      return { display: 'none' };
+  const getPositionStyle = () => {
+    if (!parentEl) {
+      return {};
     }
 
-    const style = {
-      position: 'absolute',
-      //padding: '5px',
-      background: 'bg-primary-dark',
-      //boxShadow: '0 0 4px rgba(0,0,0,.3)',
-      borderRadius: '3px',
-      //opacity: this.state.hover || this.props.active ? 1 : 0,
-      visibility: this.state.hover || this.props.active ? 'visible' : 'hidden',
-      zIndex: 50,
-      ...this.getStyle(this.props.position, this.props.arrow),
-    };
-
-    return this.mergeStyle(style, this.props.style.style);
-  }
-
-  getBaseArrowStyle() {
-    return {
-      position: 'absolute',
-      content: '""',
-    };
-  }
-
-  getArrowStyle() {
-    let fgStyle = this.getBaseArrowStyle();
-    let bgStyle = this.getBaseArrowStyle();
-    fgStyle.zIndex = 60;
-    bgStyle.zIndex = 55;
-
-    let arrowStyle = {
-      ...this.defaultArrowStyle,
-      ...this.props.style.arrowStyle,
-    };
-    let bgBorderColor = arrowStyle.borderColor ? arrowStyle.borderColor : 'transparent';
-
-    let fgColorBorder = `10px solid ${arrowStyle.color}`;
-    let fgTransBorder = `${FG_SIZE}px solid transparent`;
-    let bgColorBorder = `12px solid ${bgBorderColor}`;
-    let bgTransBorder = `${BG_SIZE}px solid transparent`;
-
-    let { position, arrow } = this.props;
-
-    if (position === 'left' || position === 'right') {
-      fgStyle.top = '50%';
-      fgStyle.borderTop = fgTransBorder;
-      fgStyle.borderBottom = fgTransBorder;
-      fgStyle.marginTop = -7;
-
-      bgStyle.borderTop = bgTransBorder;
-      bgStyle.borderBottom = bgTransBorder;
-      bgStyle.top = '50%';
-      bgStyle.marginTop = -8;
-
-      if (position === 'left') {
-        fgStyle.right = -10;
-        fgStyle.borderLeft = fgColorBorder;
-        bgStyle.right = -11;
-        bgStyle.borderLeft = bgColorBorder;
-      } else {
-        fgStyle.left = -9;
-        fgStyle.borderRight = fgColorBorder;
-        bgStyle.left = -11;
-        bgStyle.borderRight = bgColorBorder;
-      }
-
-      if (arrow === 'top') {
-        fgStyle.top = this.margin;
-        bgStyle.top = this.margin;
-      }
-      if (arrow === 'bottom') {
-        fgStyle.top = null;
-        fgStyle.bottom = this.margin - 7;
-        bgStyle.top = null;
-        bgStyle.bottom = this.margin - 8;
-      }
-    } else {
-      fgStyle.left = Math.round(this.state.width / 2 - FG_SIZE);
-      fgStyle.borderLeft = fgTransBorder;
-      fgStyle.borderRight = fgTransBorder;
-      fgStyle.marginLeft = 0;
-      bgStyle.left = fgStyle.left - 1;
-      bgStyle.borderLeft = bgTransBorder;
-      bgStyle.borderRight = bgTransBorder;
-      bgStyle.marginLeft = 0;
-
-      if (position === 'top') {
-        fgStyle.bottom = -10;
-        fgStyle.borderTop = fgColorBorder;
-        bgStyle.bottom = -11;
-        bgStyle.borderTop = bgColorBorder;
-      } else {
-        fgStyle.top = -10;
-        fgStyle.borderBottom = fgColorBorder;
-        bgStyle.top = -11;
-        bgStyle.borderBottom = bgColorBorder;
-      }
-
-      if (arrow === 'right') {
-        fgStyle.left = null;
-        fgStyle.right = this.margin + 1 - FG_SIZE;
-        bgStyle.left = null;
-        bgStyle.right = this.margin - FG_SIZE;
-      }
-      if (arrow === 'left') {
-        fgStyle.left = this.margin + 1 - FG_SIZE;
-        bgStyle.left = this.margin - FG_SIZE;
-      }
-    }
-
-    let { color, borderColor, ...propsArrowStyle } = this.props.style.arrowStyle;
-
-    const state = {
-      fgStyle: this.mergeStyle(fgStyle, propsArrowStyle),
-      bgStyle: this.mergeStyle(bgStyle, propsArrowStyle),
-    };
-
-    if (this.offscreenDifference > 0) {
-      if (state.fgStyle.top >= 0 || state.fgStyle.top < 0) {
-        state.fgStyle.top += this.offscreenDifference;
-      }
-      if (state.bgStyle.top >= 0 || state.bgStyle.top < 0) {
-        state.bgStyle.top += this.offscreenDifference;
-      }
-      if (typeof state.fgStyle.top === 'string') {
-        state.fgStyle.top = `calc(${state.fgStyle.top} + ${this.offscreenDifference}px)`;
-      }
-      if (typeof state.bgStyle.top === 'string') {
-        state.bgStyle.top = `calc(${state.bgStyle.top} + ${this.offscreenDifference}px)`;
-      }
-    }
-
-    return state;
-  }
-
-  mergeStyle(style, theme) {
-    if (theme) {
-      let { position, top, left, right, bottom, marginLeft, marginRight, ...validTheme } = theme;
-
-      return {
-        ...style,
-        ...validTheme,
-      };
-    }
-
-    return style;
-  }
-
-  getStyle(position, arrow) {
-    let alignOffset = 0;
-    let parent = this.props.parentEl;
-    let align = this.props.align;
-    let tooltipPosition = parent.getBoundingClientRect();
-    let scrollY = window.scrollY !== undefined ? window.scrollY : window.pageYOffset;
-    let scrollX = window.scrollX !== undefined ? window.scrollX : window.pageXOffset;
+    const tooltipPosition = parentEl.getBoundingClientRect();
+    const scrollY = window.scrollY ?? window.pageYOffset;
+    const scrollX = window.scrollX ?? window.pageXOffset;
     let top = scrollY + tooltipPosition.top;
-    let left = scrollX + tooltipPosition.left;
-    let style = {};
+    const left = scrollX + tooltipPosition.left;
+    const result: Record<string, number> = {};
 
-    if (this.rootRef.current) {
-      const newHeight = this.rootRef.current.offsetHeight / 2;
+    if (rootRef.current) {
+      const newHeight = rootRef.current.offsetHeight / 2;
       const bottomPosition = tooltipPosition.bottom + newHeight;
-      const isOffscreen = tooltipPosition.bottom + newHeight > window.innerHeight;
-      const offscreenDifference = bottomPosition - window.innerHeight;
+      const isOffscreen = bottomPosition > window.innerHeight;
+      const offDiff = bottomPosition - window.innerHeight;
       if (isOffscreen) {
         const padding = 3;
-        top -= offscreenDifference;
-        this.offscreenDifference = Math.min(
-          Math.max(offscreenDifference, 0),
-          newHeight - parent.getBoundingClientRect().height / 2 - padding
+        top -= offDiff;
+        offscreenDifferenceRef.current = Math.min(
+          Math.max(offDiff, 0),
+          newHeight - parentEl.getBoundingClientRect().height / 2 - padding
         );
       } else {
-        this.offscreenDifference = 0;
+        offscreenDifferenceRef.current = 0;
       }
     }
 
     const parentSize = {
-      width: parent.offsetWidth,
-      height: parent.offsetHeight,
+      width: parentEl.offsetWidth || parentEl.getBoundingClientRect?.().width || 0,
+      height: parentEl.offsetHeight || parentEl.getBoundingClientRect?.().height || 0,
     };
 
-    // fix for svg
-    if (!parent.offsetHeight && parent.getBoundingClientRect) {
-      parentSize.width = parent.getBoundingClientRect().width;
-      parentSize.height = parent.getBoundingClientRect().height;
-    }
-
+    let alignOffset = 0;
     if (align === 'left') {
       alignOffset = -parentSize.width / 2 + FG_SIZE;
     } else if (align === 'right') {
       alignOffset = parentSize.width / 2 - FG_SIZE;
     }
 
-    const stylesFromPosition = {
+    const positionMap: Record<string, () => void> = {
       left: () => {
-        style.top = top + parentSize.height / 2 - this.state.height / 2;
-        style.left = left - this.state.width - this.margin;
+        result.top = top + parentSize.height / 2 - size.height / 2;
+        result.left = left - size.width - MARGIN;
       },
       right: () => {
-        style.top = top + parentSize.height / 2 - this.state.height / 2;
-        style.left = left + parentSize.width + this.margin;
+        result.top = top + parentSize.height / 2 - size.height / 2;
+        result.left = left + parentSize.width + MARGIN;
       },
       top: () => {
-        style.left = left - this.state.width / 2 + parentSize.width / 2 + alignOffset;
-        style.top = top - this.state.height - this.margin;
+        result.left = left - size.width / 2 + parentSize.width / 2 + alignOffset;
+        result.top = top - size.height - MARGIN;
       },
       bottom: () => {
-        style.left = left - this.state.width / 2 + parentSize.width / 2 + alignOffset;
-        style.top = top + parentSize.height + this.margin;
+        result.left = left - size.width / 2 + parentSize.width / 2 + alignOffset;
+        result.top = top + parentSize.height + MARGIN;
       },
     };
 
-    const stylesFromArrow = {
-      left: () => {
-        style.left = left + parentSize.width / 2 - this.margin + alignOffset;
-      },
-      right: () => {
-        style.left = left - this.state.width + parentSize.width / 2 + this.margin + alignOffset;
-      },
-      top: () => {
-        style.top = top + parentSize.height / 2 - this.margin;
-      },
-      bottom: () => {
-        style.top = top + parentSize.height / 2 - this.state.height + this.margin;
-      },
+    positionMap[position]?.();
+
+    const arrowMap: Record<string, () => void> = {
+      left: () => { result.left = left + parentSize.width / 2 - MARGIN + alignOffset; },
+      right: () => { result.left = left - size.width + parentSize.width / 2 + MARGIN + alignOffset; },
+      top: () => { result.top = top + parentSize.height / 2 - MARGIN; },
+      bottom: () => { result.top = top + parentSize.height / 2 - size.height + MARGIN; },
     };
 
-    executeFunctionIfExist(stylesFromPosition, position);
-    executeFunctionIfExist(stylesFromArrow, arrow);
+    if (arrow) {
+      arrowMap[arrow]?.();
+    }
 
-    return style;
-  }
+    return result;
+  };
 
-  checkWindowPosition(style, arrowStyle) {
-    if (this.props.position === 'top' || this.props.position === 'bottom') {
-      if (style.left < 0) {
-        const parent = this.props.parentEl;
-        if (parent) {
-          const tooltipWidth = this.state.width;
-          let bgStyleRight = arrowStyle.bgStyle.right;
-          // For arrow = center
-          if (!bgStyleRight) {
-            bgStyleRight = tooltipWidth / 2 - BG_SIZE;
-          }
-          const newBgRight = Math.round(bgStyleRight - style.left + this.margin);
-          arrowStyle = {
-            ...arrowStyle,
-            bgStyle: {
-              ...arrowStyle.bgStyle,
-              right: newBgRight,
-              left: null,
-            },
-            fgStyle: {
-              ...arrowStyle.fgStyle,
-              right: newBgRight + 1,
-              left: null,
-            },
-          };
-        }
-        style.left = this.margin;
+  const getArrowStyles = () => {
+    const arrowStyle = { ...DEFAULT_ARROW_STYLE, ...styleProp.arrowStyle };
+    const bgBorderColor = arrowStyle.borderColor || 'transparent';
+
+    const fgColorBorder = `10px solid ${arrowStyle.color}`;
+    const fgTransBorder = `${FG_SIZE}px solid transparent`;
+    const bgColorBorder = `12px solid ${bgBorderColor}`;
+    const bgTransBorder = `${BG_SIZE}px solid transparent`;
+
+    const fgStyle: Record<string, unknown> = { position: 'absolute', content: '""', zIndex: 60 };
+    const bgStyle: Record<string, unknown> = { position: 'absolute', content: '""', zIndex: 55 };
+
+    if (position === 'left' || position === 'right') {
+      Object.assign(fgStyle, { top: '50%', borderTop: fgTransBorder, borderBottom: fgTransBorder, marginTop: -7 });
+      Object.assign(bgStyle, { borderTop: bgTransBorder, borderBottom: bgTransBorder, top: '50%', marginTop: -8 });
+
+      if (position === 'left') {
+        fgStyle.right = -10; fgStyle.borderLeft = fgColorBorder;
+        bgStyle.right = -11; bgStyle.borderLeft = bgColorBorder;
       } else {
-        let rightOffset = style.left + this.state.width - window.innerWidth;
-        if (rightOffset > 0) {
-          let originalLeft = style.left;
-          style.left = window.innerWidth - this.state.width - this.margin;
-          arrowStyle.fgStyle.marginLeft += originalLeft - style.left;
-          arrowStyle.bgStyle.marginLeft += originalLeft - style.left;
+        fgStyle.left = -9; fgStyle.borderRight = fgColorBorder;
+        bgStyle.left = -11; bgStyle.borderRight = bgColorBorder;
+      }
+
+      if (arrow === 'top') { fgStyle.top = MARGIN; bgStyle.top = MARGIN; }
+      if (arrow === 'bottom') {
+        fgStyle.top = null; fgStyle.bottom = MARGIN - 7;
+        bgStyle.top = null; bgStyle.bottom = MARGIN - 8;
+      }
+    } else {
+      Object.assign(fgStyle, {
+        left: Math.round(size.width / 2 - FG_SIZE),
+        borderLeft: fgTransBorder, borderRight: fgTransBorder, marginLeft: 0,
+      });
+      Object.assign(bgStyle, {
+        left: (fgStyle.left as number) - 1,
+        borderLeft: bgTransBorder, borderRight: bgTransBorder, marginLeft: 0,
+      });
+
+      if (position === 'top') {
+        fgStyle.bottom = -10; fgStyle.borderTop = fgColorBorder;
+        bgStyle.bottom = -11; bgStyle.borderTop = bgColorBorder;
+      } else {
+        fgStyle.top = -10; fgStyle.borderBottom = fgColorBorder;
+        bgStyle.top = -11; bgStyle.borderBottom = bgColorBorder;
+      }
+
+      if (arrow === 'right') {
+        fgStyle.left = null; fgStyle.right = MARGIN + 1 - FG_SIZE;
+        bgStyle.left = null; bgStyle.right = MARGIN - FG_SIZE;
+      }
+      if (arrow === 'left') {
+        fgStyle.left = MARGIN + 1 - FG_SIZE;
+        bgStyle.left = MARGIN - FG_SIZE;
+      }
+    }
+
+    // Apply offscreen correction
+    const offDiff = offscreenDifferenceRef.current;
+    if (offDiff > 0) {
+      for (const s of [fgStyle, bgStyle]) {
+        if (typeof s.top === 'number') {
+          s.top += offDiff;
+        } else if (typeof s.top === 'string') {
+          s.top = `calc(${s.top} + ${offDiff}px)`;
         }
       }
     }
 
-    return { style, arrowStyle };
-  }
-
-  handleMouseEnter = () => {
-    this.props.active && this.props.useHover && this.setState({ hover: true });
+    const { color: _c, borderColor: _bc, ...propsArrowStyle } = styleProp.arrowStyle || {};
+    return {
+      fgStyle: mergeStyle(fgStyle, propsArrowStyle as Record<string, unknown>),
+      bgStyle: mergeStyle(bgStyle, propsArrowStyle as Record<string, unknown>),
+    };
   };
 
-  handleMouseLeave = () => {
-    this.setState({ hover: false });
+  const checkWindowPosition = (
+    cardStyle: Record<string, unknown>,
+    arrowStyles: { fgStyle: Record<string, unknown>; bgStyle: Record<string, unknown> }
+  ) => {
+    if (position === 'top' || position === 'bottom') {
+      const cardLeft = cardStyle.left as number;
+      if (cardLeft < 0) {
+        let bgStyleRight = arrowStyles.bgStyle.right as number;
+        if (!bgStyleRight) {
+          bgStyleRight = size.width / 2 - BG_SIZE;
+        }
+        const newBgRight = Math.round(bgStyleRight - cardLeft + MARGIN);
+        arrowStyles = {
+          ...arrowStyles,
+          bgStyle: { ...arrowStyles.bgStyle, right: newBgRight, left: null },
+          fgStyle: { ...arrowStyles.fgStyle, right: newBgRight + 1, left: null },
+        };
+        cardStyle.left = MARGIN;
+      } else {
+        const rightOffset = cardLeft + size.width - window.innerWidth;
+        if (rightOffset > 0) {
+          const originalLeft = cardLeft;
+          cardStyle.left = window.innerWidth - size.width - MARGIN;
+          (arrowStyles.fgStyle.marginLeft as number) += originalLeft - (cardStyle.left as number);
+          (arrowStyles.bgStyle.marginLeft as number) += originalLeft - (cardStyle.left as number);
+        }
+      }
+    }
+    return { style: cardStyle, arrowStyle: arrowStyles };
   };
 
-  componentDidMount() {
-    this.updateSize();
-  }
+  const globalStyle: Record<string, unknown> = {
+    position: 'absolute',
+    borderRadius: '3px',
+    visibility: hover || active ? 'visible' : 'hidden',
+    zIndex: 50,
+    ...getPositionStyle(),
+  };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props !== prevProps) {
-      this.updateSize();
-    }
-  }
+  const mergedGlobalStyle = mergeStyle(globalStyle, styleProp.style as Record<string, unknown>);
+  const arrowStyles = getArrowStyles();
+  const { style: finalStyle, arrowStyle: finalArrowStyle } = checkWindowPosition(mergedGlobalStyle, arrowStyles);
 
-  updateSize() {
-    const newWidth = this.rootRef.current.offsetWidth;
-    const newHeight = this.rootRef.current.offsetHeight;
-
-    if (newWidth !== this.state.width || newHeight !== this.state.height) {
-      this.setState({
-        width: newWidth,
-        height: newHeight,
-      });
-    }
-  }
-
-  render() {
-    let { style, arrowStyle } = this.checkWindowPosition(
-      this.getGlobalStyle(),
-      this.getArrowStyle()
-    );
-
-    return (
-      <div
-        style={style}
-        onMouseEnter={this.handleMouseEnter}
-        onMouseLeave={this.handleMouseLeave}
-        ref={this.rootRef}
-      >
-        {this.props.arrow ? (
-          <div>
-            <span style={arrowStyle.fgStyle} />
-            <span style={arrowStyle.bgStyle} />
-          </div>
-        ) : null}
-        {this.props.children}
-      </div>
-    );
-  }
+  return (
+    <div
+      style={finalStyle as React.CSSProperties}
+      onMouseEnter={() => active && useHover && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      ref={rootRef}
+    >
+      {arrow ? (
+        <div>
+          <span style={finalArrowStyle.fgStyle as React.CSSProperties} />
+          <span style={finalArrowStyle.bgStyle as React.CSSProperties} />
+        </div>
+      ) : null}
+      {children}
+    </div>
+  );
 }
-
-const executeFunctionIfExist = (object, key) => {
-  if (Object.prototype.hasOwnProperty.call(object, key)) {
-    object[key]();
-  }
-};
