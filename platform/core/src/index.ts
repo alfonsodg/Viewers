@@ -35,6 +35,7 @@ import {
   WorkflowStepsService,
   StudyPrefetcherService,
   MultiMonitorService,
+  AuditTrailService,
 } from './services';
 
 import { DisplaySetMessage, DisplaySetMessageList } from './services/DisplaySetService';
@@ -83,6 +84,7 @@ const OHIF = {
   HangingProtocolService,
   UserAuthenticationService,
   MultiMonitorService,
+  AuditTrailService,
   IWebApiDataSource,
   DicomMetadataStore,
   pubSubServiceInterface,
@@ -130,6 +132,7 @@ export {
   ViewportGridService,
   HangingProtocolService,
   UserAuthenticationService,
+  AuditTrailService,
   IWebApiDataSource,
   DicomMetadataStore,
   pubSubServiceInterface,
