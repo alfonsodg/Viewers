@@ -4,9 +4,6 @@ on:
   push:
     branches: [master]
 
-env:
-  ACTIONS_STEP_DEBUG: true
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

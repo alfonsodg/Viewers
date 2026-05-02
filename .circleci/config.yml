@@ -33,7 +33,7 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          command: bun install --no-save
+          command: bun install --frozen-lockfile
       # RUN TESTS
       - run:
           name: 'JavaScript Test Suite'
@@ -74,7 +74,7 @@ jobs:
       - install_bun
       - run:
           name: Install Dependencies
-          command: bun install --no-save
+          command: bun install --frozen-lockfile
       # Build & Test
       - run:
           name: 'Perform the versioning before build'
@@ -118,9 +118,8 @@ jobs:
       - run:
           name: Avoid hosts unknown for github
           command: |
-            rm -rf ~/.ssh
-            mkdir ~/.ssh/
-            echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
             git config --global user.email "danny.ri.brown+ohif-bot@gmail.com"
             git config --global user.name "ohif-bot"
       - run:
@@ -146,13 +145,12 @@ jobs:
           at: ~/repo
       - run:
           name: Install Dependencies
-          command: bun install --no-save
+          command: bun install --frozen-lockfile
       - run:
           name: Avoid hosts unknown for github
           command: |
-            rm -rf ~/.ssh
-            mkdir ~/.ssh/
-            echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
             git config --global user.email "danny.ri.brown+ohif-bot@gmail.com"
             git config --global user.name "ohif-bot"
       - run:
@@ -215,7 +213,7 @@ jobs:
               echo $IMAGE_VERSION_FULL
               # Build our amd64 image, auth, and push
               docker build --platform linux/amd64 --tag ohif/app:$IMAGE_VERSION_FULL-amd64 --tag ohif/app:latest-amd64 .
-              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              printf "%s" "$DOCKER_PWD" | docker login -u "$DOCKER_LOGIN" --password-stdin
               docker push ohif/app:$IMAGE_VERSION_FULL-amd64
               docker push ohif/app:latest-amd64
             fi
@@ -249,7 +247,7 @@ jobs:
               echo $IMAGE_VERSION_FULL
               # Build our arm64 image, auth, and push
               docker build --platform linux/arm64 --tag ohif/app:$IMAGE_VERSION_FULL-arm64 --tag ohif/app:latest-arm64 .
-              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              printf "%s" "$DOCKER_PWD" | docker login -u "$DOCKER_LOGIN" --password-stdin
               docker push ohif/app:$IMAGE_VERSION_FULL-arm64
               docker push ohif/app:latest-arm64
             fi
@@ -287,7 +285,7 @@ jobs:
               echo $IMAGE_VERSION_FULL
               # Build our amd64 image, auth, and push
               docker build --platform linux/amd64 --tag ohif/app:$IMAGE_VERSION_FULL-amd64 --tag ohif/app:latest-beta-amd64 .
-              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              printf "%s" "$DOCKER_PWD" | docker login -u "$DOCKER_LOGIN" --password-stdin
               docker push ohif/app:$IMAGE_VERSION_FULL-amd64
               docker push ohif/app:latest-beta-amd64
             fi
@@ -320,7 +318,7 @@ jobs:
               echo $IMAGE_VERSION_FULL
               # Build our arm64 image, auth, and push
               docker build --platform linux/arm64 --tag ohif/app:$IMAGE_VERSION_FULL-arm64 --tag ohif/app:latest-beta-arm64 .
-              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              printf "%s" "$DOCKER_PWD" | docker login -u "$DOCKER_LOGIN" --password-stdin
               docker push ohif/app:$IMAGE_VERSION_FULL-arm64
               docker push ohif/app:latest-beta-arm64
             fi
@@ -436,7 +434,7 @@ jobs:
               export IMAGE_VERSION_FULL=v$IMAGE_VERSION
               echo $IMAGE_VERSION
               echo $IMAGE_VERSION_FULL
-              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              printf "%s" "$DOCKER_PWD" | docker login -u "$DOCKER_LOGIN" --password-stdin
 
               # Create and push manifest for specific version
               docker manifest create ohif/app:$IMAGE_VERSION_FULL \
@@ -476,7 +474,7 @@ jobs:
               export IMAGE_VERSION_FULL=v$IMAGE_VERSION
               echo $IMAGE_VERSION
               echo $IMAGE_VERSION_FULL
-              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              printf "%s" "$DOCKER_PWD" | docker login -u "$DOCKER_LOGIN" --password-stdin
 
               # Create and push manifest for specific beta version
               docker manifest create ohif/app:$IMAGE_VERSION_FULL \
