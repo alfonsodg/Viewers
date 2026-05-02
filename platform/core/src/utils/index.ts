@@ -12,6 +12,7 @@ import makeCancelable from './makeCancelable';
 import hotkeys from './hotkeys';
 import Queue from './Queue';
 import isDicomUid from './isDicomUid';
+import { getCalibrationInfo, CalibrationSource, CalibrationSeverity } from './calibrationStatus';
 import formatDate from './formatDate';
 import formatTime from './formatTime';
 import formatPN from './formatPN';
@@ -82,6 +83,9 @@ const utils = {
   hotkeys,
   Queue,
   isDicomUid,
+  getCalibrationInfo,
+  CalibrationSource,
+  CalibrationSeverity,
   isEqualWithin,
   sopClassDictionary,
   addAccessors,
@@ -125,6 +129,9 @@ export {
   hotkeys,
   Queue,
   isDicomUid,
+  getCalibrationInfo,
+  CalibrationSource,
+  CalibrationSeverity,
   isEqualWithin,
   resolveObjectPath,
   hierarchicalListUtils,
