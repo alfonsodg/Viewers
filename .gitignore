@@ -72,3 +72,45 @@ libs/
 link-cs3d.js
 unlink-cs3d.js
 auth.json
+
+# Infrastructure & secrets — NEVER track
+REMOTE.md
+.env
+.env.*
+!.env.example
+
+# AI agents & copilot — NEVER track
+AGENTS.md
+.github/copilot-instructions.md
+.github/copilot*.md
+.copilot/
+.kiro/
+.cursor/
+.aider*
+.continue/
+.cline/
+.roo/
+.windsurf/
+.augment*
+codex.md
+claude.md
+CLAUDE.md
+.claude/
+GEMINI.md
+.gemini/
+GROK.md
+.grok/
+.qwen/
+.factory/
+.codex/
+.opencode/
+.crush/
+.kilocode/
+.rovodev/
+lsp.json
+
+# Debug & screenshots — NEVER track
+debug/
+
+# Reference docs — NEVER track
+reference/

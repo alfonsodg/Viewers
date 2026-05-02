@@ -1,3 +1,36 @@
+# OHIF Viewers — CCVASS Fork
+
+Enhanced fork of [OHIF/Viewers](https://github.com/OHIF/Viewers) with security
+hardening, clinical-grade features, accessibility improvements, and dcm4chee
+PACS integration.
+
+## Fork Highlights
+
+- **34 issues identified and resolved** across security, Docker, TypeScript,
+  architecture, i18n, accessibility, and clinical compliance
+- **21 PRs merged** covering fixes, features, and end-to-end integration
+- **Clinical services**: Audit Trail (ATNA), Calibration Warnings, Patient
+  Verification, W/L presets (MR/CR/DX/MG/US/NM), DICOM Print SCU, Modality
+  Worklist, TID 2000 SR generation, Hanging Protocol validation
+- **Security**: Docker hardening (no chmod 777, pinned base images, HEALTHCHECK),
+  Nginx security headers, XSS-hardened config loader, CVE patches
+- **i18n**: Spanish translations, no hardcoded UI strings
+- **Accessibility**: Semantic buttons, aria-labels, ErrorBoundary on panels
+- **Deployment**: Integrated with dcm4chee via DICOMweb (relative URLs through
+  Nginx reverse proxy)
+
+## Quick Deploy (dcm4chee)
+
+```bash
+APP_CONFIG=config/dcm4chee.js PUBLIC_URL=/ohif/ yarn run build
+rsync -az --delete platform/app/dist/ user@server:/var/www/ohif/
+```
+
+See [docs/STANDARDS.md](docs/STANDARDS.md) for development standards applied to
+this fork.
+
+---
+
 <!-- prettier-ignore-start -->
 <div align="center">
   <h1>OHIF Medical Imaging Viewer</h1>
