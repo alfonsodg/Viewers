@@ -21,6 +21,7 @@ import {
   WorkflowStepsService,
   StudyPrefetcherService,
   MultiMonitorService,
+  AuditTrailService,
   // utils,
 } from '@ohif/core';
 
@@ -78,6 +79,7 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
     PanelService.REGISTRATION,
     WorkflowStepsService.REGISTRATION,
     [StudyPrefetcherService.REGISTRATION, appConfig.studyPrefetcher],
+    [AuditTrailService.REGISTRATION, appConfig.auditTrail],
   ]);
 
   errorHandler.getHTTPErrorHandler = () => {
